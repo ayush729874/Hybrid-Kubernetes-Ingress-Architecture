@@ -6,7 +6,7 @@ metadata:
   name: dbuser
   namespace: default
 
-
+---
 #service exposing port 8085
 
 apiVersion: v1
@@ -23,6 +23,7 @@ spec:
       port: 8085
       targetPort: 3306
 
+---
 #statefulset
 
 apiVersion: apps/v1
@@ -50,7 +51,10 @@ spec:
               name: mysql
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: Ayush@123
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
           resources:
             requests:
               memory: "100Mi"
@@ -58,7 +62,10 @@ spec:
               memory: "200Mi"
           securityContext:
             runAsNonRoot: true
+            runAsUser: 999  # Standard MySQL UID is often 999
+            runAsGroup: 999    # Ensures the container can write to mounted volumes
 
+---
 #vertical pod Autoscaler
 
 apiVersion: autoscaling.k8s.io/v1
@@ -75,6 +82,7 @@ spec:
     updateMode: "Off"
 
 
+---
 #network policy
 
 apiVersion: networking.k8s.io/v1
@@ -97,6 +105,7 @@ spec:
         - protocol: TCP
           port: 3306
 
+---
 #pv
 
 apiVersion: v1
@@ -113,6 +122,7 @@ spec:
   hostPath:
     path: /data/mysql
 
+---
 #pvc
 
 apiVersion: v1

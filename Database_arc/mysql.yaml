@@ -136,3 +136,16 @@ spec:
   resources:
     requests:
       storage: 1Gi
+
+---
+#pdb
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mysql-pdb
+spec:
+  minAvailable: 2  # Keep 2 out of 3 running at all times
+  selector:
+    matchLabels:
+      app: mysql

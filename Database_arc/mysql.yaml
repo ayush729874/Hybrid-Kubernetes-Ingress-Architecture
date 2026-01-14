@@ -79,7 +79,7 @@ spec:
     kind: StatefulSet
     name: mysql
   updatePolicy:
-    updateMode: "Off"
+    updateMode: "Recreate"
 
 
 ---

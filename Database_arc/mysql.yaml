@@ -12,10 +12,10 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql-headless
+  name: mysql-svc
   namespace: default
 spec:
-  clusterIP: None
+  type: ClusterIP
   selector:
     app: mysql
   ports:
@@ -32,8 +32,8 @@ metadata:
   name: mysql
   namespace: default
 spec:
-  serviceName: mysql-headless
-  replicas: 3
+  serviceName: mysql-svc
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
@@ -79,7 +79,7 @@ spec:
     kind: StatefulSet
     name: mysql
   updatePolicy:
-    updateMode: "Recreate"
+    updateMode: "Off"
 
 
 ---
@@ -100,7 +100,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app: nginx
+              app: backend
       ports:
         - protocol: TCP
           port: 3306
@@ -138,14 +138,11 @@ spec:
       storage: 1Gi
 
 ---
-#pdb
-
-apiVersion: policy/v1
-kind: PodDisruptionBudget
+#secret
+apiVersion: v1
+kind: Secret
 metadata:
-  name: mysql-pdb
-spec:
-  minAvailable: 2  # Keep 2 out of 3 running at all times
-  selector:
-    matchLabels:
-      app: mysql
+  name: mysql-secret
+type: Opaque
+data:
+  password: QXl1c2hAMTIz

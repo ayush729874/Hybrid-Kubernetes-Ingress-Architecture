@@ -8,3 +8,5 @@ Deployement : with 2 replicas , requests and limits , Environements
 Service : created a clusterip service for backend.
 Network Policy : Network policy which allows app=frontend traffic with ingree traffic
 HPA : created a horizontal pod autoscalling to manage load.
+
+tried to test the flow with a frontend labled test pod. There is internal server error.

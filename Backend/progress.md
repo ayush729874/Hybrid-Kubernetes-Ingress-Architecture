@@ -15,3 +15,28 @@ Service for DB was created with name mysql-svc and i had defined host name "mysq
 
 I had created a custon service port 8085 but in config map i selected db port to 3306. as my db is using 8085 port to except traffic so there was issue with connectivity.
 Updated the same and now able to insert in to table from backend pods.
+
+                (Backend Pod)
+             ┌────────────────────────┐
+             │     backend app        │
+             │                        │
+             │  Connects to:          │
+             │  mysql-svc:8085   ───────────────┐
+             └────────────────────────┘          │
+                                                 │ Service Port (8085)
+                                                 ▼
+                             ┌──────────────────────────────────┐
+                             │   Kubernetes Service (mysql-svc) │
+                             │  Type: ClusterIP                 │
+                             │  Port:       8085                │
+                             │  TargetPort: 3306                │
+                             └──────────────────────────────────┘
+                                                 │
+                                                 │ Forwards traffic internally
+                                                 ▼
+                         ┌────────────────────────────────────────────┐
+                         │         MySQL Pod (mysql-0)                │
+                         │                                            │
+                         │  MySQL Server listening on: 3306 (pod)     │
+                         │                                            │
+                         └────────────────────────────────────────────┘

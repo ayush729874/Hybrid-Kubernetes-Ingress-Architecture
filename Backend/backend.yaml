@@ -6,9 +6,9 @@ kind: ConfigMap
 metadata:
   name: backend-config
 data:
-  DB_HOST: mysql
+  DB_HOST: mysql-svc
   DB_NAME: appdb
-  DB_PORT: "3306"
+  DB_PORT: "8085"
 
 ---
 # -------------------------------

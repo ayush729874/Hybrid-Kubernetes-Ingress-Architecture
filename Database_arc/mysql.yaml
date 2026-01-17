@@ -12,10 +12,10 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql-headless
+  name: mysql-svc
   namespace: default
 spec:
-  clusterIP: None
+  type: ClusterIP
   selector:
     app: mysql
   ports:
@@ -32,8 +32,8 @@ metadata:
   name: mysql
   namespace: default
 spec:
-  serviceName: mysql-headless
-  replicas: 3
+  serviceName: mysql-svc
+  replicas: 1
   selector:
     matchLabels:
       app: mysql
@@ -59,7 +59,7 @@ spec:
             requests:
               memory: "100Mi"
             limits:
-              memory: "200Mi"
+              memory: "500Mi"
           securityContext:
             runAsNonRoot: true
             runAsUser: 999  # Standard MySQL UID is often 999
@@ -100,7 +100,7 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app: nginx
+              app: backend
       ports:
         - protocol: TCP
           port: 3306
@@ -136,3 +136,13 @@ spec:
   resources:
     requests:
       storage: 1Gi
+
+---
+#secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+data:
+  password: QXl1c2hAMTIz

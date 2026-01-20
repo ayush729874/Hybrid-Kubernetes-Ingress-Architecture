@@ -1,0 +1,22 @@
+There are two widely used NGINX Ingress controllers available in the ecosystem:
+1. NGINX (Official) Ingress Controller
+Developed and maintained by NGINX Inc.
+Enterprise features available through NGINX Plus
+Supports advanced routing, security, and traffic management features
+
+2. Kubernetes Community NGINX Ingress Controller
+Open-source implementation maintained by the Kubernetes community
+Fully compatible with Kubernetes standards
+Most commonly used in open-source clusters and learning environments
+
+For this project, the Kubernetes community NGINX Ingress Controller was installed.
+This controller is open-source and easy to integrate with any bare-metal or cloud Kubernetes setup.
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.14.1/deploy/static/provider/baremetal/deploy.yaml
+
+This manifest:
+
+Deploys the NGINX Ingress Controller
+Creates necessary RBAC components
+Sets up default admission webhook
+Configures NGINX to run in a bare-metal environment

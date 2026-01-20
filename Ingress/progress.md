@@ -92,5 +92,80 @@ An Ingress Controller is mandatory to make routing effective
 Address field in kubectl get ingress confirms controller attachment
 RBAC, admission webhooks, and ingress class are critical for stability
 
+🧪 Ingress Connectivity Validation
+
+After deploying the Ingress Controller and defining routing rules, the next step was to validate traffic flow from the Ingress to the application.
+
+✔️ Step 1: Validate Frontend Traffic Through Ingress
+
+Tested connectivity from worker1 using the NodePort exposed by the Ingress Controller:
+
+curl -H "Host: treecom.site" http://192.168.234.129:31604/
+
+Result:
+Frontend page was returned successfully, confirming:
+
+Ingress Controller is reachable
+Ingress routing to frontend service is working
+DNS-based host matching (Host: treecom.site) is functioning correctly
+This validated the frontend path via the Ingress.
+
+⚠️ Step 2: Backend API Call Failing With 504
+
+Next, tested the /submit API that writes data into MySQL:
+
+curl -H "Host: treecom.site" -X POST \
+  http://192.168.234.129:31604/submit \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ayush"}'
 
 
+Result:
+504 Gateway Timeout
+
+A 504 means:
+
+The Ingress Controller forwarded the request, but received no response from the backend within the timeout window.
+
+So the issue was not Ingress → backend routing, but something blocking the backend path.
+
+🕵️ Root Cause: NetworkPolicy Blocking Ingress → Backend Traffic
+
+The backend NetworkPolicy was originally configured to allow traffic only from pods labeled app=frontend.
+
+This meant:
+
+Frontend → Backend ✔️ (allowed)
+Ingress Controller → Backend ❌ (blocked)
+
+Since the Ingress Controller resides in the ingress-nginx namespace, its traffic never matched the NetworkPolicy rules intended for frontend pods.
+
+Therefore, backend returned no response, causing the 504 at Ingress.
+
+🔧 Resolution: Allow Ingress Controller Namespace in NetworkPolicy
+
+Updated the NetworkPolicy to allow ingress from:
+Pods with label app=frontend
+Pods from namespace ingress-nginx (Ingress Controller)
+
+from:
+- namespaceSelector:
+    matchLabels:
+      name: ingress-nginx
+
+
+After applying the updated rules:
+Ingress Controller was able to reach backend
+/submit requests started working end-to-end
+
+504 errors were resolved
+
+✅ Final Outcome
+
+The full request flow is now functional:
+Client → Ingress Controller → Backend → MySQL
+
+✔️ Frontend loads successfully
+✔️ Backend API accepts POST requests
+✔️ Data insertion into database is working
+✔️ All namespaces now correctly permitted by NetworkPolicy

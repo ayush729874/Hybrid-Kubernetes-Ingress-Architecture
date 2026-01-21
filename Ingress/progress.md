@@ -114,10 +114,7 @@ This validated the frontend path via the Ingress.
 
 Next, tested the /submit API that writes data into MySQL:
 
-curl -H "Host: treecom.site" -X POST \
-  http://192.168.234.129:31604/submit \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Ayush"}'
+curl -H "Host: treecom.site" -X POST http://192.168.234.129:31604/submit -H "Content-Type: application/json" -d '{"name":"Ayush"}'
 
 
 Result:

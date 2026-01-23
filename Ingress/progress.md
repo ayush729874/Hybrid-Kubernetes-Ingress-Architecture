@@ -166,3 +166,7 @@ Client → Ingress Controller → Backend → MySQL
 ✔️ Backend API accepts POST requests
 ✔️ Data insertion into database is working
 ✔️ All namespaces now correctly permitted by NetworkPolicy
+
+Pathced ingress controller to only get scheduled on worker1 as change in pod IP can cause network issues which can prevent DMZ to connect with Ingress Controller.
+
+kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p '{"spec": {"template": {"spec": {"nodeSelector": {"kubernetes.io/hostname": "worker1"}}}}}'

@@ -44,9 +44,9 @@ spec:
     spec:
       serviceAccountName: dbuser
       nodeSelector:
-        kubernetes.io/hostname: worker2  # Ensures it finds /data/mysql
+        kubernetes.io/hostname: worker2  
       securityContext:
-        fsGroup: 999                  # Gives MySQL permission to the host folder
+        fsGroup: 999                  
       containers:
         - name: mysql
           image: mysql:8.0
@@ -61,7 +61,7 @@ spec:
                   key: password
           volumeMounts:
             - name: mysql-persistent-storage
-              mountPath: /var/lib/mysql # Where MySQL looks for data
+              mountPath: /var/lib/mysql 
           resources:
             requests:
               memory: "100Mi"
@@ -76,10 +76,10 @@ spec:
       name: mysql-persistent-storage
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "mysql-sc"    # Matches your PV storageClassName
+      storageClassName: "mysql-sc"    
       resources:
         requests:
-          storage: 2Gi                # Matches your PV capacity
+          storage: 2Gi                
 
 ---
 #vertical pod Autoscaler

@@ -8,7 +8,7 @@ metadata:
 data:
   DB_HOST: mysql-svc
   DB_NAME: appdb
-  DB_PORT: "8085"
+  DB_PORT: "3306"
 
 ---
 # -------------------------------

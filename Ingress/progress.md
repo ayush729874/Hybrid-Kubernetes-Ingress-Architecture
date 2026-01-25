@@ -100,7 +100,7 @@ After deploying the Ingress Controller and defining routing rules, the next step
 
 Tested connectivity from worker1 using the NodePort exposed by the Ingress Controller:
 
-curl -H "Host: treecom.site" http://192.168.234.129:31604/
+curl -H "Host: treecom.site" http://192.168.234.129:30437/
 
 Result:
 Frontend page was returned successfully, confirming:
@@ -114,7 +114,7 @@ This validated the frontend path via the Ingress.
 
 Next, tested the /submit API that writes data into MySQL:
 
-curl -H "Host: treecom.site" -X POST http://192.168.234.129:31604/submit -H "Content-Type: application/json" -d '{"name":"Ayush"}'
+curl -H "Host: treecom.site" -X POST http://192.168.234.129:30437/submit -H "Content-Type: application/json" -d '{"name":"Ayush"}'
 
 
 Result:

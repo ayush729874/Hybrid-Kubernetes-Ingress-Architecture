@@ -123,3 +123,7 @@ Tailscale may override node IPs → must explicitly set Calico auto-detect inter
 Ingress troubleshooting must include NetworkPolicy, backend health, and DB connectivity
 Version mismatch between master and worker nodes can break cluster stability
 Sometimes rebuilding the cluster is faster than trying to revive a deeply broken environment
+
+
+This time adding my worker2 in tailscale i insured that it won't affect my cluster IP.
+After some confguration my frontend and backend was accessible from Cloud VM it self but when i tried to curl on localhost, it showd 502 error. After many troubleshhoting got to know that SELINUX is blocking the traffic. So after allowing the traffic my Website was accessed via Browser.

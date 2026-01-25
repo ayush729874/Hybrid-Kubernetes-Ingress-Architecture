@@ -20,8 +20,8 @@ metadata:
   name: backend-secret
 type: Opaque
 data:
-  DB_USER: QXBwdXNlcg==          # Appuser
-  DB_PASSWORD: QXBwVXNlckAxMjM=  # AppUser@123
+  DB_USER: QXBwdXNlcg==      
+  DB_PASSWORD: QXl1c2hAMTIz  
 
 ---
 # -------------------------------

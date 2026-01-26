@@ -134,4 +134,4 @@ Updated frontend workflows to align with backend improvements.
 Outcome:
 The entire application stack—frontend, backend, and database—is now functioning smoothly, with accurate data insertion and consistent access from both the cloud VM and local environment as well as publically.
 
-
+I got a finding, i created an another DMZ as holding privious one could charge. when i created new DMZ and tried to access the site then it was unreacheble as my browser has stored the cache and it was pointing to my privious DMZ ip. So after clearing the cache domain was accessible.

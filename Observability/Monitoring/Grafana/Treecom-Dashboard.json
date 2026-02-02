@@ -1,0 +1,304 @@
+{
+  "title": "🚀 Treecom.site - Production Monitoring Dashboard",
+  "tags": ["treecom", "production", "3-tier"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "title": "🎯 APPLICATION HEALTH STATUS",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "count(kube_pod_status_phase{namespace=\"default\", pod=~\"frontend.*\", phase=\"Running\"})", "legendFormat": "🌐 Frontend Pods"},
+        {"expr": "count(kube_pod_status_phase{namespace=\"default\", pod=~\"backend.*\", phase=\"Running\"})", "legendFormat": "⚙️ Backend Pods"},
+        {"expr": "count(kube_pod_status_phase{namespace=\"default\", pod=~\"mysql-[0-9]+\", phase=\"Running\"})", "legendFormat": "💾 MySQL Pods"},
+        {"expr": "mysql_up", "legendFormat": "🔌 MySQL Connection"},
+        {"expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\", status!~\"[4-5]..\"}[5m])) / sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\"}[5m])) * 100", "legendFormat": "✅ Success Rate (%)"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {"steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "textMode": "value_and_name",
+        "text": {"titleSize": 18, "valueSize": 32}
+      }
+    },
+    {
+      "title": "📊 REQUEST RATE - Traffic Flow",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {"expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\"}[5m]))", "legendFormat": "Total Traffic"},
+        {"expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\", path=\"/\"}[5m]))", "legendFormat": "Frontend (/)"},
+        {"expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\", path=\"/submit\"}[5m]))", "legendFormat": "Backend (/submit)"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "reqps", "custom": {"lineWidth": 2, "fillOpacity": 20}}}
+    },
+    {
+      "title": "⚡ RESPONSE TIME - Percentiles",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {"expr": "histogram_quantile(0.50, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress=\"treecom-ingress\"}[5m])) by (le))", "legendFormat": "p50 (median)"},
+        {"expr": "histogram_quantile(0.95, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress=\"treecom-ingress\"}[5m])) by (le))", "legendFormat": "p95"},
+        {"expr": "histogram_quantile(0.99, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress=\"treecom-ingress\"}[5m])) by (le))", "legendFormat": "p99"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "s", "custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "📈 SUMMARY STATISTICS",
+      "type": "row",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 12}
+    },
+    {
+      "title": "🌐 Frontend Pods",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 13},
+      "targets": [{"expr": "count(kube_pod_info{namespace=\"default\", pod=~\"frontend.*\"})"}],
+      "options": {"colorMode": "value", "graphMode": "area", "text": {"valueSize": 30}}
+    },
+    {
+      "title": "⚙️ Backend Pods",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 13},
+      "targets": [{"expr": "count(kube_pod_info{namespace=\"default\", pod=~\"backend.*\"})"}],
+      "options": {"colorMode": "value", "graphMode": "area", "text": {"valueSize": 30}}
+    },
+    {
+      "title": "💾 Database Pods",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 13},
+      "targets": [{"expr": "count(kube_pod_info{namespace=\"default\", pod=~\"mysql-[0-9]+\"})"}],
+      "options": {"colorMode": "value", "graphMode": "area", "text": {"valueSize": 30}}
+    },
+    {
+      "title": "🚀 Total App Pods",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 13},
+      "targets": [{"expr": "count(kube_pod_info{namespace=\"default\", pod=~\"frontend.*|backend.*|mysql-[0-9]+\"})"}],
+      "options": {"colorMode": "value", "graphMode": "area", "text": {"valueSize": 30}}
+    },
+    {
+      "title": "📊 Total Requests (24h)",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 16, "y": 13},
+      "targets": [{"expr": "sum(increase(nginx_ingress_controller_requests{ingress=\"treecom-ingress\"}[24h]))"}],
+      "options": {"colorMode": "value", "graphMode": "area", "text": {"valueSize": 30}},
+      "description": "Total number of HTTP requests received by your application in the last 24 hours"
+    },
+    {
+      "title": "🧠 Total Memory Used",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 13},
+      "targets": [{"expr": "sum(container_memory_working_set_bytes{namespace=\"default\", pod=~\"frontend.*|backend.*|mysql-[0-9]+\", container!=\"\"})"}],
+      "fieldConfig": {"defaults": {"unit": "bytes"}},
+      "options": {"colorMode": "value", "graphMode": "area", "text": {"valueSize": 30}}
+    },
+    {
+      "title": "✅ SUCCESS RATE",
+      "type": "gauge",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 17},
+      "targets": [{"expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\", status!~\"[4-5]..\"}[5m])) / sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\"}[5m])) * 100"}],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {"steps": [{"color": "red", "value": 0}, {"color": "yellow", "value": 95}, {"color": "green", "value": 99}]}
+        }
+      },
+      "options": {"showThresholdMarkers": true, "text": {"valueSize": 40}}
+    },
+    {
+      "title": "🚨 ERROR RATE",
+      "type": "gauge",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 17},
+      "targets": [{"expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\", status=~\"[4-5]..\"}[5m]))"}],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": {"steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 10}, {"color": "red", "value": 50}]}
+        }
+      },
+      "options": {"showThresholdMarkers": true, "text": {"valueSize": 40}}
+    },
+    {
+      "title": "💾 DB CONNECTIONS",
+      "type": "gauge",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 17},
+      "targets": [{"expr": "mysql_global_status_threads_connected"}],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {"steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 50}, {"color": "red", "value": 100}]}
+        }
+      },
+      "options": {"showThresholdMarkers": true, "text": {"valueSize": 40}}
+    },
+    {
+      "title": "🌐 FRONTEND TIER",
+      "type": "row",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 23}
+    },
+    {
+      "title": "💻 Frontend CPU Usage",
+      "type": "timeseries",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 24},
+      "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"default\", pod=~\"frontend.*\", container!=\"\"}[5m])) by (pod)", "legendFormat": "{{pod}}"}],
+      "fieldConfig": {"defaults": {"unit": "short", "custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "🧠 Frontend Memory Usage",
+      "type": "timeseries",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 24},
+      "targets": [{"expr": "sum(container_memory_working_set_bytes{namespace=\"default\", pod=~\"frontend.*\", container!=\"\"}) by (pod)", "legendFormat": "{{pod}}"}],
+      "fieldConfig": {"defaults": {"unit": "bytes", "custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "⚙️ BACKEND TIER",
+      "type": "row",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 31}
+    },
+    {
+      "title": "💻 Backend CPU Usage",
+      "type": "timeseries",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 32},
+      "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"default\", pod=~\"backend.*\", container!=\"\"}[5m])) by (pod)", "legendFormat": "{{pod}}"}],
+      "fieldConfig": {"defaults": {"unit": "short", "custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "🧠 Backend Memory Usage",
+      "type": "timeseries",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 32},
+      "targets": [{"expr": "sum(container_memory_working_set_bytes{namespace=\"default\", pod=~\"backend.*\", container!=\"\"}) by (pod)", "legendFormat": "{{pod}}"}],
+      "fieldConfig": {"defaults": {"unit": "bytes", "custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "💾 DATABASE TIER - MySQL",
+      "type": "row",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 39}
+    },
+    {
+      "title": "🔌 MySQL Connections",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40},
+      "targets": [
+        {"expr": "mysql_global_status_threads_connected", "legendFormat": "Active Connections"},
+        {"expr": "mysql_global_status_max_used_connections", "legendFormat": "Max Used"},
+        {"expr": "mysql_global_variables_max_connections", "legendFormat": "Max Allowed"}
+      ],
+      "fieldConfig": {"defaults": {"custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "📊 MySQL Query Rate by Type",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40},
+      "targets": [
+        {"expr": "rate(mysql_global_status_queries[5m])", "legendFormat": "Total Queries"},
+        {"expr": "rate(mysql_global_status_commands_total{command=\"select\"}[5m])", "legendFormat": "SELECT"},
+        {"expr": "rate(mysql_global_status_commands_total{command=\"insert\"}[5m])", "legendFormat": "INSERT"},
+        {"expr": "rate(mysql_global_status_commands_total{command=\"update\"}[5m])", "legendFormat": "UPDATE"},
+        {"expr": "rate(mysql_global_status_commands_total{command=\"delete\"}[5m])", "legendFormat": "DELETE"}
+      ],
+      "fieldConfig": {"defaults": {"custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "💻 MySQL CPU Usage",
+      "type": "timeseries",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 48},
+      "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"default\", pod=~\"mysql-[0-9]+\", container!=\"\"}[5m])) by (pod)", "legendFormat": "{{pod}}"}],
+      "fieldConfig": {"defaults": {"unit": "short", "custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "🧠 MySQL Memory Usage",
+      "type": "timeseries",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 48},
+      "targets": [{"expr": "sum(container_memory_working_set_bytes{namespace=\"default\", pod=~\"mysql-[0-9]+\", container!=\"\"}) by (pod)", "legendFormat": "{{pod}}"}],
+      "fieldConfig": {"defaults": {"unit": "bytes", "custom": {"lineWidth": 2, "fillOpacity": 30}}}
+    },
+    {
+      "title": "💽 InnoDB Buffer Pool Reads",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 55},
+      "targets": [{"expr": "mysql_global_status_innodb_buffer_pool_reads"}],
+      "options": {"colorMode": "value", "graphMode": "area", "text": {"valueSize": 30}}
+    },
+    {
+      "title": "🐌 Slow Queries",
+      "type": "stat",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 55},
+      "targets": [{"expr": "mysql_global_status_slow_queries"}],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {"steps": [{"color": "green", "value": 0}, {"color": "yellow", "value": 10}, {"color": "red", "value": 50}]}
+        }
+      },
+      "options": {"colorMode": "value", "graphMode": "area", "text": {"valueSize": 30}}
+    },
+    {
+      "title": "📈 Buffer Pool Hit Ratio",
+      "type": "gauge",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 55},
+      "targets": [{"expr": "(mysql_global_status_innodb_buffer_pool_read_requests / (mysql_global_status_innodb_buffer_pool_read_requests + mysql_global_status_innodb_buffer_pool_reads)) * 100"}],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {"steps": [{"color": "red", "value": 0}, {"color": "yellow", "value": 80}, {"color": "green", "value": 95}]}
+        }
+      },
+      "options": {"showThresholdMarkers": true, "text": {"valueSize": 30}}
+    },
+    {
+      "title": "📋 APPLICATION PODS STATUS",
+      "type": "row",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 61}
+    },
+    {
+      "title": "🔍 Pod Status",
+      "type": "table",
+      "gridPos": {"h": 7, "w": 12, "x": 0, "y": 62},
+      "targets": [{"expr": "kube_pod_status_phase{namespace=\"default\", pod=~\"frontend.*|backend.*|mysql-[0-9]+\", phase=\"Running\"}", "format": "table", "instant": true}],
+      "transformations": [{
+        "id": "organize",
+        "options": {
+          "excludeByName": {"Time": true, "__name__": true, "container": true, "endpoint": true, "instance": true, "job": true, "namespace": true, "phase": true, "service": true, "uid": true},
+          "renameByName": {"Value": "Status", "pod": "Pod Name"}
+        }
+      }],
+      "fieldConfig": {
+        "overrides": [{
+          "matcher": {"id": "byName", "options": "Status"},
+          "properties": [
+            {"id": "mappings", "value": [{"options": {"0": {"color": "red", "text": "DOWN"}, "1": {"color": "green", "text": "UP"}}, "type": "value"}]},
+            {"id": "custom.displayMode", "value": "color-background"}
+          ]
+        }]
+      }
+    },
+    {
+      "title": "🔄 Pod Restart Counts",
+      "type": "table",
+      "gridPos": {"h": 7, "w": 12, "x": 12, "y": 62},
+      "targets": [{"expr": "kube_pod_container_status_restarts_total{namespace=\"default\", pod=~\"frontend.*|backend.*|mysql-[0-9]+\"}", "format": "table", "instant": true}],
+      "transformations": [{
+        "id": "organize",
+        "options": {
+          "excludeByName": {"Time": true, "__name__": true, "endpoint": true, "instance": true, "job": true, "namespace": true, "service": true, "uid": true},
+          "renameByName": {"Value": "Restarts", "container": "Container", "pod": "Pod Name"}
+        }
+      }],
+      "fieldConfig": {
+        "overrides": [{
+          "matcher": {"id": "byName", "options": "Restarts"},
+          "properties": [{"id": "thresholds", "value": {"steps": [{"color": "green", "value": 0}, {"color": "red", "value": 1}]}}]
+        }]
+      }
+    }
+  ]
+}

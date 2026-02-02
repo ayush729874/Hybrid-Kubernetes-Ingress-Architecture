@@ -17,85 +17,100 @@ End-to-end visibility of requests, errors, and resource usage
 The default dashboards did not provide this depth, so a custom solution was necessary.
 
 🛠️ Architecture Summary
-1. MySQL Metrics Exposure via MySQL Exporter
+✅ APPLICATION HEALTH STATUS
+Frontend Pods
+Shows how many frontend pods are running — helps verify app availability.
 
-Before creating the dashboard, DB metrics had to be exposed.
-To achieve this:
+Backend Pods
+Shows how many backend pods are running — ensures API layer is healthy.
 
-Deployed a MySQL Exporter Pod inside the cluster
-Created a Kubernetes Secret containing DB credentials (non-root user)
-Configured MySQL Exporter to authenticate using this secret
+MySQL Pods
+Shows active MySQL pod count — confirms database availability.
 
-Network Policy Adjustment
+MySQL Connection
+Shows if MySQL exporter can connect to DB — ensures DB is reachable for monitoring.
 
-Initially, MySQL Exporter could not reach the MySQL Pod because of a restrictive network policy allowing only the backend to access DB.
+Success Rate (%)
+Shows percentage of successful requests — helps detect API failures instantly.
 
-To fix this:
+✅ TRAFFIC & PERFORMANCE
+Request Rate – Traffic Flow
+Shows how many requests hit the application per second — helps understand load patterns.
 
-Updated the NetworkPolicy to allow the MySQL Exporter Pod to access the MySQL Pod.
-This enabled Prometheus to scrape DB health metrics successfully.
+Response Time – Percentiles (p50/p95/p99)
+Shows median and slowest request times — helps identify performance issues.
 
-📈 Custom Production-Grade Dashboard
+✅ SUMMARY STATISTICS
+Frontend Pod Count
+Counts running frontend pods — confirms frontend scaling.
 
-Once metrics from all components were available, a complete production-level Grafana dashboard was created.
-It includes critical graphs and KPIs required for real-time monitoring and troubleshooting.
+Backend Pod Count
+Counts running backend pods — ensures backend scaling.
 
-🔍 Dashboard Metrics & Visualizations
-1. Running Pod Count
+Database Pod Count
+Counts running MySQL pods — confirms DB redundancy (if used).
 
-Frontend
-Backend
-MySQL
+Total App Pods
+Shows all app-related pods — gives a quick full system health snapshot.
 
-2. Success Rate
+Total Requests (24h)
+Shows total site hits in 24 hours — helps track traffic volume.
 
-Overall application success percentage
-Error rate trends
+Total Memory Used
+Shows total RAM used across all app pods — helps measure resource consumption.
 
-3. Request Rate & Response Time
+✅ GAUGES
+Success Rate Gauge
+Shows real-time successful request percentage — instantly highlights failures.
 
-Requests/second
-Latency patterns
+Error Rate Gauge
+Shows number of failed requests per second — helps detect issues early.
 
-4. 24-Hour Total Requests & Memory Usage
+DB Connections Gauge
+Shows current MySQL connection usage — helps prevent connection overload.
 
-Daily traffic summary
-Total memory consumed by the system
+✅ FRONTEND TIER
+Frontend CPU Usage
+Shows per-pod CPU usage — helps detect overloaded frontend pods.
 
-5. Success Rate Errors & DB Connection Metrics
+Frontend Memory Usage
+Shows per-pod RAM usage — identifies memory leaks or spikes.
 
-Errors vs. successful requests
-DB connection health status
+✅ BACKEND TIER
+Backend CPU Usage
+Shows backend pod CPU usage — helpful for scaling decisions.
 
-6. Frontend Resource Utilization
+Backend Memory Usage
+Shows backend RAM usage — detects heavy memory consumers.
 
-CPU usage
-Memory usage
+✅ DATABASE TIER – MYSQL
+MySQL Connections
+Shows active, max-used, and max-allowed connections — helps avoid too many connections.
 
-7. Backend Resource Utilization
+MySQL Query Rate by Type
+Shows SELECT/INSERT/UPDATE/DELETE rates — helps understand query load patterns.
 
-CPU usage
-Memory usage
+MySQL CPU Usage
+Shows MySQL CPU use per pod — useful for detecting heavy workloads.
 
-8. MySQL Metrics
+MySQL Memory Usage
+Shows RAM used by MySQL — helps ensure DB cache is sized correctly.
 
-Active MySQL connections
-Query rate by query type
-Slow query monitoring
-CPU & memory usage
+InnoDB Buffer Pool Reads
+Shows how often MySQL had to read from disk — helps detect slow disk access.
 
-9. InnoDB Engine Health
+Slow Queries
+Shows queries that exceeded slow-query threshold — helps find performance bottlenecks.
 
-Buffer pool reads
-Buffer pool hit ratio
-Slow queries analysis
+Buffer Pool Hit Ratio
+Shows % of queries served from RAM — indicates database performance efficiency.
 
-10. Pod Health Metrics
+✅ APPLICATION PODS SECTION
+Pod Status Table
+Shows running status of each pod — quickly highlights failing pods.
 
-Pod status
-Restart counts
-
-Stability analysis over time
+Pod Restart Counts
+Shows how many times each container restarted — helps detect crashes or instability.
 
 🧩 Result
 

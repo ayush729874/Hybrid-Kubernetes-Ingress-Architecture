@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-exporter
+  namespace: default
+  labels:
+    app: mysql-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-exporter
+  template:
+    metadata:
+      labels:
+        app: mysql-exporter
+    spec:
+      containers:
+      - name: mysql-exporter
+        image: prom/mysqld-exporter:v0.14.0
+        env:
+        - name: DATA_SOURCE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-exporter-secret
+              key: DATA_SOURCE_NAME
+        ports:
+        - containerPort: 9104
+          name: metrics
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9104
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+
+apiVersion: v1
+data:
+  DATA_SOURCE_NAME: QXBwdXNlcjpBeXVzaEAxMjNAdGNwKG15c3FsLXN2YzozMzA2KS8=
+kind: Secret
+metadata:
+  creationTimestamp: "2026-02-02T15:43:05Z"
+  name: mysql-exporter-secret
+  namespace: default
+  resourceVersion: "126152"
+  uid: 1f45decf-33e0-4b26-9eb7-a085911dd5c6
+type: Opaque

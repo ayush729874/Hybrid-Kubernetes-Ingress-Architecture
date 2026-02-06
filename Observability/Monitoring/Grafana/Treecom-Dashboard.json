@@ -1,5 +1,5 @@
 {
-  "title": "🚀 Treecom.site - Production Monitoring Dashboard",
+  "title": "Treecom.site",
   "tags": ["treecom", "production", "3-tier"],
   "timezone": "browser",
   "refresh": "5s",
@@ -13,7 +13,7 @@
         {"expr": "count(kube_pod_status_phase{namespace=\"default\", pod=~\"frontend.*\", phase=\"Running\"})", "legendFormat": "🌐 Frontend Pods"},
         {"expr": "count(kube_pod_status_phase{namespace=\"default\", pod=~\"backend.*\", phase=\"Running\"})", "legendFormat": "⚙️ Backend Pods"},
         {"expr": "count(kube_pod_status_phase{namespace=\"default\", pod=~\"mysql-[0-9]+\", phase=\"Running\"})", "legendFormat": "💾 MySQL Pods"},
-        {"expr": "mysql_up", "legendFormat": "🔌 MySQL Connection"},
+        {"expr": "mysql_info_schema_table_rows{schema=\"appdb\", table=\"users\"}", "legendFormat": "📊 User Records"},
         {"expr": "sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\", status!~\"[4-5]..\"}[5m])) / sum(rate(nginx_ingress_controller_requests{ingress=\"treecom-ingress\"}[5m])) * 100", "legendFormat": "✅ Success Rate (%)"}
       ],
       "fieldConfig": {
@@ -204,7 +204,14 @@
         {"expr": "rate(mysql_global_status_commands_total{command=\"update\"}[5m])", "legendFormat": "UPDATE"},
         {"expr": "rate(mysql_global_status_commands_total{command=\"delete\"}[5m])", "legendFormat": "DELETE"}
       ],
-      "fieldConfig": {"defaults": {"custom": {"lineWidth": 2, "fillOpacity": 30}}}
+      "fieldConfig": {"defaults": {"custom": {"lineWidth": 2, "fillOpacity": 30}}},
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      }
     },
     {
       "title": "💻 MySQL CPU Usage",

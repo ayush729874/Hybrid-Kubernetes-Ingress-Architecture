@@ -119,3 +119,5 @@ Full observability for Treecom’s core services
 Quick detection of performance degradation
 Deep database insights for optimizing queries
 A centralized view for SRE/DevOps operations
+
+After observing the dashboard for few days, i thought i should monitor rows count as well so i added that graph on top. After that i updated few records on the table but records were not updated. then after some research i got to know, i will have to analyze the table which reads all the indexes on the table and update the count. So i schedule a cron job which will analyze DB on each 30 min which will Update Rows count on the dashboard.

@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mysql-cron
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: mysql
+        spec:
+          containers:
+          - name: analyze
+            image: mysql:8.0
+            command:
+            - /bin/sh
+            - -c
+            - mysql -h mysql-svc -u Appuser -p"${password}" -e "ANALYZE TABLE appdb.users;"
+            env:
+            - name: password
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+          restartPolicy: OnFailure

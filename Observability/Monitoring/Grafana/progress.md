@@ -66,3 +66,25 @@ Important: For Prometheus to monitor any new service, you need to:
 
 
 This principle applies to any service you want to monitor with Prometheus, not just Ingress controllers.
+
+I got an issue with the setup that:
+Grafana stores all dashboards and settings inside the container at:
+/var/lib/grafana/grafana.db
+
+Because this is ephemeral, the data gets deleted if the Grafana pod restarts or moves to another node.
+To fix this, I added persistent storage and node affinity so Grafana always uses the same data directory.
+
+Backup Existing Grafana Data:
+GRAFANA_POD=$(kubectl get pods -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}')
+kubectl cp $GRAFANA_POD:/var/lib/grafana/grafana.db ./grafana-backup-$(date +%Y%m%d).db
+
+Create PV & PVC:
+I created a Persistent Volume and Persistent Volume Claim so Grafana can save its grafana.db on permanent storage instead of inside the container.
+
+Add Node Affinity to Grafana Deployment:
+Since the PV is node-local, Grafana must always run on the same worker node.
+I added node affinity to ensure Grafana always schedules on worker1.
+
+Restore Backup to PV Location:
+sudo scp ./grafana-backup-*.db root@192.168.234.129:/data/grafana/
+This restores all previous dashboards and settings onto the new persistent storage.

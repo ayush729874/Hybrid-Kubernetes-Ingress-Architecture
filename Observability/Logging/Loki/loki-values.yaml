@@ -1644,12 +1644,12 @@ write:
   extraArgs: []
   # -- Environment variables to add to the write pods
   extraEnv:
-    - name: ACCESS_KEY_ID
+    - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
           name: loki-s3-credentials
           key: AWS_ACCESS_KEY_ID
-    - name: SECRET_ACCESS_KEY
+    - name: AWS_SECRET_ACCESS_KEY
       valueFrom:
         secretKeyRef:
           name: loki-s3-credentials
@@ -1803,12 +1803,12 @@ read:
   extraContainers: []
   # -- Environment variables to add to the read pods
   extraEnv:
-    - name: ACCESS_KEY_ID
+    - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
           name: loki-s3-credentials
           key: AWS_ACCESS_KEY_ID
-    - name: SECRET_ACCESS_KEY
+    - name: AWS_SECRET_ACCESS_KEY
       valueFrom:
         secretKeyRef:
           name: loki-s3-credentials
@@ -1941,12 +1941,12 @@ backend:
   extraArgs: []
   # -- Environment variables to add to the backend pods
   extraEnv:
-    - name: ACCESS_KEY_ID
+    - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
           name: loki-s3-credentials
           key: AWS_ACCESS_KEY_ID
-    - name: SECRET_ACCESS_KEY
+    - name: AWS_SECRET_ACCESS_KEY
       valueFrom:
         secretKeyRef:
           name: loki-s3-credentials

@@ -48,7 +48,19 @@ alloy:
       discovery.kubernetes "pods" {
         role = "pod"
       }
+      loki.process "fix_timestamp" {
+       forward_to = [loki.write.endpoint.receiver]
 
+       stage.regex {
+         expression = "^(?P<time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})"
+        }
+
+       stage.timestamp {
+         source   = "time"
+         format   = "2006-01-02 15:04:05"
+         location = "Asia/Kolkata" // <--- This forces the 5.30h offset correction
+       }
+      }
       /********************************************
        * RELABELING: Add metadata to logs
        ********************************************/
@@ -122,7 +134,8 @@ alloy:
       loki.write "loki_endpoint" {
         endpoint {
           url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
-          
+          tenant_id = "{{ .namespace }}"
+    
           // Batch settings for efficiency
           batch_wait = "1s"
           batch_size = "1MB"

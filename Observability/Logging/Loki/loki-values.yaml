@@ -20,7 +20,8 @@ global:
   dnsNamespace: "kube-system"
   # -- Common additional CLI arguments for all jobs (that is, -log.level debug, -config.expand-env=true or -log-config-reverse-order)
   # scope: admin-api, backend, bloom-builder, bloom-gateway, bloom-planner, compactor, distributor, index-gateway, ingester, overrides-exporter, pattern-ingester, querier, query-frontend, query-scheduler, read, ruler, write.
-  extraArgs: []
+  extraArgs:
+    - "-config.expand-env=true"
   # -- Common environment variables to add to all pods directly managed by this chart.
   # scope: admin-api, backend, bloom-builder, bloom-gateway, bloom-planner, compactor, distributor, index-gateway, ingester, overrides-exporter, pattern-ingester, querier, query-frontend, query-scheduler, read, ruler, write.
   extraEnv: []
@@ -427,104 +428,16 @@ loki:
   # -- Storage config. Providing this will automatically populate all necessary storage configs in the templated config.
   # -- In case of using thanos storage, enable use_thanos_objstore and the configuration should be done inside the object_store section.
   storage:
-    # Loki requires a bucket for chunks and the ruler. GEL requires a third bucket for the admin API.
-    # Please provide these values if you are using object storage.
+    type: s3
     bucketNames:
       chunks: treecom-bucket
       ruler: treecom-bucket
       admin: treecom-bucket
-    type: s3
     s3:
       s3: s3://treecom-bucket/loki
-      endpoint: https://s3.ap-south-1.amazonaws.com
       region: ap-south-1
-      secretAccessKey: "$AWS_SECRET_ACCESS_KEY"
-      accessKeyId: "$AWS_ACCESS_KEY_ID"
-      signatureVersion: null
-      s3ForcePathStyle: false
-      insecure: false
-      http_config: {}
-      # -- Check https://grafana.com/docs/loki/latest/configure/#s3_storage_config for more info on how to provide a backoff_config
-      backoff_config: {}
-      disable_dualstack: false
-    gcs:
-      chunkBufferSize: 0
-      requestTimeout: "0s"
-      enableHttp2: true
-    azure:
-      accountName: null
-      accountKey: null
-      connectionString: null
-      useManagedIdentity: false
-      useFederatedToken: false
-      userAssignedId: null
-      requestTimeout: null
-      endpointSuffix: null
-      chunkDelimiter: null
-    swift:
-      auth_version: null
-      auth_url: null
-      internal: null
-      username: null
-      user_domain_name: null
-      user_domain_id: null
-      user_id: null
-      password: null
-      domain_id: null
-      domain_name: null
-      project_id: null
-      project_name: null
-      project_domain_id: null
-      project_domain_name: null
-      region_name: null
-      container_name: null
-      max_retries: null
-      connect_timeout: null
-      request_timeout: null
-    filesystem:
-      chunks_directory: /var/loki/chunks
-      rules_directory: /var/loki/rules
-
-    # Loki now supports using thanos storage clients for connecting to object storage backend.
-    # This will become the default way to configure storage in a future releases.
-    use_thanos_objstore: false
-
-    object_store:
-      # Type of object store. Valid options are: s3, gcs, azure
-      type: s3
-      # Optional prefix for storage keys
-      storage_prefix: null
-      # S3 configuration (when type is "s3")
-      s3:
-        # S3 endpoint URL
-        endpoint: null
-        # Optional region
-        region: null
-        # Optional access key
-        access_key_id: null
-        # Optional secret key
-        secret_access_key: null
-        # Optional. Enable if using self-signed TLS
-        insecure: false
-        # Optional server-side encryption configuration
-        sse: {}
-        # Optional HTTP client configuration
-        http: {}
-
-      # GCS configuration (when type is "gcs")
-      gcs:
-        # Name of the bucket
-        bucket_name: null
-        # Optional service account JSON
-        service_account: null
-
-      # Azure configuration (when type is "azure")
-      azure:
-        # Storage account name
-        account_name: null
-        # Optional storage account key
-        account_key: null
-
+      accessKeyId: ${AWS_ACCESS_KEY_ID}
+      secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
   # -- Check https://grafana.com/docs/loki/latest/configuration/#schema_config for more info on how to configure schemas
   schemaConfig:
     configs:
@@ -963,7 +876,7 @@ networkPolicy:
 # Configuration for the memberlist service
 memberlist:
   service:
-    publishNotReadyAddresses: false
+    publishNotReadyAddresses: true
     annotations: {}
 ######################################################################################################################
 #
@@ -1642,7 +1555,8 @@ write:
   # -- Comma-separated list of Loki modules to load for the write
   targetModule: "write"
   # -- Additional CLI args for the write
-  extraArgs: []
+  extraArgs:
+    - "-config.expand-env=true"
   # -- Environment variables to add to the write pods
   extraEnv:
     - name: AWS_ACCESS_KEY_ID
@@ -1797,7 +1711,8 @@ read:
   # run two targets, false will run 3 targets.
   legacyReadTarget: false
   # -- Additional CLI args for the read
-  extraArgs: []
+  extraArgs:
+    - "-config.expand-env=true"
   # -- init containers to add to the read pods
   initContainers: []
   # -- Containers to add to the read pods
@@ -1939,7 +1854,8 @@ backend:
   # -- Comma-separated list of Loki modules to load for the backend
   targetModule: "backend"
   # -- Additional CLI args for the backend
-  extraArgs: []
+  extraArgs:
+    - "-config.expand-env=true"
   # -- Environment variables to add to the backend pods
   extraEnv:
     - name: AWS_ACCESS_KEY_ID

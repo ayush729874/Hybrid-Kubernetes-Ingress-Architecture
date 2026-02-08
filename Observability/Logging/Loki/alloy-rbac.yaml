@@ -1,0 +1,54 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: alloy
+rules:
+  # Allow reading pods
+  - apiGroups: [""]
+    resources:
+      - pods
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+    verbs:
+      - get
+      - list
+      - watch
+  # Allow reading pod logs
+  - apiGroups: [""]
+    resources:
+      - pods/log
+    verbs:
+      - get
+  # Allow reading namespaces
+  - apiGroups: [""]
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  # Allow reading ingresses
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: alloy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: alloy
+subjects:
+  - kind: ServiceAccount
+    name: alloy
+    namespace: loki

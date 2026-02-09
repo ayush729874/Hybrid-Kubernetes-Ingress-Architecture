@@ -32,3 +32,33 @@ After that there was time mismatch issue in logs so updated alloy to correct log
 [Loki Querier] → reads indexes, downloads chunks, filters
         ↓
 [Query Results to User]
+
+
+┌──────────────────────────────────────────────────────────┐
+│                     Load Balancer                        │
+└─────┬──────────────────────────────┬────────────────────┘
+      │                              │
+      │ (queries)                    │ (log ingestion)
+      │                              │
+┌─────▼──────────┐            ┌──────▼─────────┐
+│  READ PATH     │            │  WRITE PATH    │
+│                │            │                │
+│ Query Frontend │            │  Distributor   │
+│    Querier     │◄───────────┤   Ingester     │
+└────────┬───────┘            └────────┬───────┘
+         │                             │
+         │                             │
+         │         ┌───────────────────┘
+         │         │
+      ┌──▼─────────▼──┐
+      │  BACKEND      │
+      │               │
+      │  Compactor    │
+      │  Ruler        │
+      │  Index Gateway│
+      └───────┬───────┘
+              │
+         ┌────▼─────┐
+         │ Storage  │
+         │   (S3)   │
+         └──────────┘

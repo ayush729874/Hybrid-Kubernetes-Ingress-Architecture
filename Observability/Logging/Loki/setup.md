@@ -16,7 +16,7 @@ Better pipeline configuration - More flexible log processing
 
 First of all i extracted values of chart grafana/loki. Now created a secret containing details of my AWS S3 bucket accesskey and secret access key and injected those on values as environment variable. After that configured S3 bucket on that and deployed that chart but all the pods were waiting for PVC so i uninstalled chart and read whole value yaml and disable each PVC (read,write,backend and binary) so they by defualt use S3 for storing logs and also configured chunks-cache according my cluster confuguration. After all the configuration My loki server was up and running.
 
-There were some issue with environment variables which was not letting loki write on AWS S3 bucket so i tried many configuration and updated values yaml accordingly. After correctly defining the ENV's and enabled "-config.expand-env=true".
+There were some issue with environment variables which was not letting loki write on AWS S3 bucket so i tried many configuration and updated values yaml accordingly. After correctly defining the ENV's and enabled "-config.expand-env=true" which lets loki replace variable with actual secret values. Without this Loki assumes variable as String. This was the main issue my Loki server was not able to write logs on S3 Bucket.
 After that there was time mismatch issue in logs so updated alloy to correct log timming. After all of that Loki was able to write logs on S3.
 
 [Application Logs]

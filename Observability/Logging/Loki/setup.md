@@ -18,3 +18,17 @@ First of all i extracted values of chart grafana/loki. Now created a secret cont
 
 There were some issue with environment variables which was not letting loki write on AWS S3 bucket so i tried many configuration and updated values yaml accordingly. After correctly defining the ENV's and enabled "-config.expand-env=true".
 After that there was time mismatch issue in logs so updated alloy to correct log timming. After all of that Loki was able to write logs on S3.
+
+[Application Logs]
+        ↓
+[Grafana Alloy] → discovers, collects, parses, labels
+        ↓ (HTTP Push API)
+[Loki Distributor] → validates, rate limits, routes
+        ↓ (internal gRPC)
+[Loki Ingester] → buffers in memory, compresses into chunks
+        ↓ (periodic flush)
+[Amazon S3] → stores chunks + indexes permanently
+        ↑ (query time)
+[Loki Querier] → reads indexes, downloads chunks, filters
+        ↓
+[Query Results to User]

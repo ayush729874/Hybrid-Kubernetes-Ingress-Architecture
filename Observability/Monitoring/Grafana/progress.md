@@ -88,3 +88,5 @@ I added node affinity to ensure Grafana always schedules on worker1.
 Restore Backup to PV Location:
 sudo scp ./grafana-backup-*.db root@192.168.234.129:/data/grafana/
 This restores all previous dashboards and settings onto the new persistent storage.
+
+After loki and Grafana Alloy setup, i observed few prometheus and grafana pods were getting restarted continuously but when i checked logs there was not nothing on it. So after troubleshotting got to know pods which were failing were running on worker2 and my ingress controller was also not transfering traffic to my application so i checked resource usage on worker2 and memory was not free so extended memory and falied pods were running one by one.

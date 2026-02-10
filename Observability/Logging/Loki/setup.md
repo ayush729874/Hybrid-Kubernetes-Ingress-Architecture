@@ -62,3 +62,5 @@ After that there was time mismatch issue in logs so updated alloy to correct log
          │ Storage  │
          │   (S3)   │
          └──────────┘
+
+While setting UP loki as a data source, grafana shows unable to connect. So i tried to check all loki pods all of them were running fine but although issue was there. so i tried to check logs of pods and got to know Read pod was not able to Get connect with scheduler with It's IP. Then i checked and found shcduler is running within backend pod and backend pod was restarted as node was down for sometime and after restart backend pod IP got changed. So i resrated read pod and it found scheduler with it's current IP and run fine now. So in case of grafana, grafana runs few queries to stablish the connection and read pod is responsible for Queries that is why grafana was not able to connect. After that fix grafana was able to connect loki as a data source.

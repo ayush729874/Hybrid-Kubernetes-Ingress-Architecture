@@ -1,4 +1,5 @@
 This repository documents a production-ready alerting setup built using Grafana Unified Alerting, leveraging both Prometheus (metrics) and Loki (logs) as data sources.
+In case of any failure alrting will let me know tha issue on time and loki logs will helm me for debugging.
 
 The goal of this setup is to ensure:
 

@@ -38,9 +38,6 @@ extraObjects:
 controller:
   # -- Used for label app.kubernetes.io/component
   componentName: "jenkins-controller"
-  envFrom:
-    - secretRef:
-        name: loki-s3-credentials
   JCasC:
     configScripts:
       location: |
@@ -48,11 +45,24 @@ controller:
           location:
             url: "http://jenkins.treecom.site:30437"
             adminAddress: "aayushmauryap@gmail.com"
-      s3-config: |
+      s3-artifact-config: |
         unclassified:
-          awsCredentialsProvider:
-            accessKeyId: "${AWS_ACCESS_KEY_ID}"
-            secretAccessKey: "${AWS_SECRET_ACCESS_KEY}"
+          artifactManagerConfiguration:
+            artifactManagerFactories:
+              - jCloudArtifactManagerFactory:
+                  provider:
+                    s3:
+                      bucketName: "jenkins.treecom.site"
+                      bucketPrefix: ""
+                      region: "ap-south-1"
+                      disableSessionToken: false
+          s3:
+            profiles:
+              - name: "my-s3-profile"
+                accessKey: "${AWS_ACCESS_KEY_ID}"
+                secretKey: "${AWS_SECRET_ACCESS_KEY}"
+                region: "ap-south-1"
+                bucket: "jenkins.treecom.site"  
   image:
     # -- Controller image registry
     registry: "docker.io"
@@ -173,7 +183,22 @@ controller:
   containerEnvFrom: []
 
   # -- Environment variables for Jenkins Container
-  containerEnv: []
+  containerEnv:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-credentials
+          key: AWS_ACCESS_KEY_ID
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-credentials
+          key: AWS_SECRET_ACCESS_KEY
+    - name: AWS_REGION
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-credentials
+          key: AWS_REGION
   #   - name: http_proxy
   #     value: "http://192.168.64.1:3128"
 
@@ -546,7 +571,7 @@ controller:
     configUrls: []
     # - https://acme.org/jenkins.yaml
     # -- List of Jenkins Config as Code scripts
-    configScripts: {}
+    configScripts: {}  
     #  welcome-message: |
     #    jenkins:
     #      systemMessage: Welcome to our CI\CD server. This Jenkins is configured and managed 'as code'.

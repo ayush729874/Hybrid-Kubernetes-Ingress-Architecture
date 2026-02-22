@@ -40,13 +40,12 @@ controller:
   componentName: "jenkins-controller"
   JCasC:
     configScripts:
-      location: |
+      jenkins-config: |
         unclassified:
           location:
             url: "http://jenkins.treecom.site:30437"
             adminAddress: "aayushmauryap@gmail.com"
-      s3-artifact-config: |
-        unclassified:
+
           artifactManagerConfiguration:
             artifactManagerFactories:
               - jCloudArtifactManagerFactory:
@@ -56,13 +55,15 @@ controller:
                       bucketPrefix: ""
                       region: "ap-south-1"
                       disableSessionToken: false
-          s3:
+          amazonS3Profiles: |
             profiles:
               - name: "my-s3-profile"
+                useIamRole: false
+                usePathStyleUrl: true
                 accessKey: "${AWS_ACCESS_KEY_ID}"
                 secretKey: "${AWS_SECRET_ACCESS_KEY}"
                 region: "ap-south-1"
-                bucket: "jenkins.treecom.site"  
+                bucket: "jenkins.treecom.site" 
   image:
     # -- Controller image registry
     registry: "docker.io"
@@ -457,8 +458,8 @@ controller:
     - kubernetes:4423.vb_59f230b_ce53
     - workflow-aggregator:608.v67378e9d3db_1
     - git:5.10.0
-    - configuration-as-code:2037.v8e5349845172
     - s3:latest
+    - configuration-as-code:2037.v8e5349845172
     - aws-java-sdk2-core:2.33.4-62.vc1a_8df64b_4c9                   
     - artifact-manager-s3:latest        
     - aws-credentials:latest            
@@ -1449,3 +1450,4 @@ helmtest:
       repository: "bats/bats"
       # -- Tag of the image to test the framework
       tag: "1.13.0"
+

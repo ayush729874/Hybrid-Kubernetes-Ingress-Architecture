@@ -1,0 +1,111 @@
+apiVersion: v1
+data:
+  config.alloy: |
+    /****************************************
+     * LOGGING CONFIGURATION
+     ****************************************/
+
+    logging {
+      level = "info"
+      format = "logfmt"
+    }
+
+    /****************************************
+     * DISCOVERY: Find pods in the cluster
+     ****************************************/
+
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    loki.process "fix_timestamp" {
+      forward_to = [loki.write.loki_endpoint.receiver]
+
+      stage.regex {
+        expression = "^(?P<time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})"
+      }
+
+      stage.timestamp {
+        source = "time"
+        format = "2006-01-02 15:04:05"
+        location = "Asia/Kolkata"
+      }
+    }
+
+    /****************************************
+     * RELABELING: Add metadata to logs
+     ****************************************/
+
+    discovery.relabel "kubernetes_pods" {
+      targets = discovery.kubernetes.pods.targets
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label = "namespace"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label = "pod"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label = "container"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_node_name"]
+        target_label = "node"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        target_label = "app"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+        separator = "/"
+        target_label = "__path__"
+        replacement = "/var/log/pods/*$1/*/*.log"
+      }
+    }
+
+    /****************************************
+     * LOG COLLECTION
+     ****************************************/
+
+    loki.source.kubernetes "pods" {
+      targets = discovery.relabel.kubernetes_pods.output
+      forward_to = [loki.process.add_job_label.receiver]
+      
+    }
+
+    /****************************************
+     * LOG PROCESSING: Add job label
+     ****************************************/
+
+    loki.process "add_job_label" {
+      stage.static_labels {
+        values = {
+          job = "kubernetes-pods",
+        }
+      }
+
+      forward_to = [loki.write.loki_endpoint.receiver]
+    }
+
+    /****************************************
+     * LOKI WRITE
+     ****************************************/
+
+    loki.write "loki_endpoint" {
+      endpoint {
+        url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
+      }
+    }
+kind: ConfigMap
+metadata:
+  name: grafana-allow-alloy
+  namespace: loki

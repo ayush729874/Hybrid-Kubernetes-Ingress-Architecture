@@ -1,0 +1,172 @@
+apiVersion: v1
+data:
+  config.yaml: |
+    auth_enabled: false
+
+    bloom_build:
+      builder:
+        planner_address: loki-backend-headless.loki.svc.cluster.local:9095
+      enabled: false
+
+    bloom_gateway:
+      client:
+        addresses: dnssrvnoa+_grpc._tcp.loki-backend-headless.loki.svc.cluster.local
+      enabled: false
+
+    chunk_store_config:
+      chunk_cache_config:
+        background:
+          writeback_buffer: 5000
+          writeback_goroutines: 1
+          writeback_size_limit: 200MB
+        default_validity: 0s
+        memcached:
+          batch_size: 4
+          parallelism: 5
+        memcached_client:
+          addresses: dnssrvnoa+_memcached-client._tcp.loki-chunks-cache.loki.svc.cluster.local
+          consistent_hash: true
+          max_idle_conns: 72
+          timeout: 2000ms
+
+    common:
+      compactor_grpc_address: 'loki-backend.loki.svc.cluster.local:9095'
+      path_prefix: /var/loki
+      replication_factor: 1
+      storage:
+        s3:
+          access_key_id: ${AWS_ACCESS_KEY_ID}
+          bucketnames: treecom-bucket
+          insecure: false
+          region: ap-south-1
+          s3: s3://treecom-bucket/loki
+          s3forcepathstyle: false
+          secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+
+    compactor:
+      working_directory: /var/loki/compactor
+      compaction_interval: 10m
+      retention_enabled: true
+      retention_delete_delay: 2h
+      retention_delete_worker_count: 150
+      delete_request_store: filesystem
+
+    frontend:
+      scheduler_address: ""
+      tail_proxy_url: ""
+
+    frontend_worker:
+      scheduler_address: ""
+
+    index_gateway:
+      mode: simple
+
+    limits_config:
+      retention_period: 48h
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+      ingestion_rate_mb: 10
+      ingestion_burst_size_mb: 20
+      per_stream_rate_limit: 3MB
+      per_stream_rate_limit_burst: 15MB
+      max_cache_freshness_per_query: 10m
+      query_timeout: 300s
+      split_queries_by_interval: 15m
+      volume_enabled: true
+
+    memberlist:
+      join_members:
+      - loki-memberlist.loki.svc.cluster.local
+
+    pattern_ingester:
+      enabled: false
+
+    query_range:
+      align_queries_with_step: true
+      cache_results: true
+      results_cache:
+        cache:
+          background:
+            writeback_buffer: 500000
+            writeback_goroutines: 1
+            writeback_size_limit: 500MB
+          default_validity: 12h
+          memcached_client:
+            addresses: dnssrvnoa+_memcached-client._tcp.loki-results-cache.loki.svc.cluster.local
+            consistent_hash: true
+            timeout: 500ms
+            update_interval: 1m
+
+    ruler:
+      storage:
+        s3:
+          access_key_id: ${AWS_ACCESS_KEY_ID}
+          bucketnames: treecom-bucket
+          insecure: false
+          region: ap-south-1
+          s3: s3://treecom-bucket/loki
+          s3forcepathstyle: false
+          secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+        type: s3
+      wal:
+        dir: /var/loki/ruler-wal
+
+    runtime_config:
+      file: /etc/loki/runtime-config/runtime-config.yaml
+
+    schema_config:
+      configs:
+      - from: "2024-04-01"
+        index:
+          period: 24h
+          prefix: index_
+        object_store: s3
+        schema: v13
+        store: tsdb
+
+    server:
+      grpc_listen_port: 9095
+      http_listen_port: 3100
+      http_server_read_timeout: 600s
+      http_server_write_timeout: 600s
+
+    storage_config:
+      aws:
+        access_key_id: ${AWS_ACCESS_KEY_ID}
+        region: ap-south-1
+        s3: s3://treecom-bucket/loki
+        secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+      bloom_shipper:
+        working_directory: /var/loki/data/bloomshipper
+      boltdb_shipper:
+        index_gateway_client:
+          server_address: dns+loki-backend-headless.loki.svc.cluster.local:9095
+      hedging:
+        at: 250ms
+        max_per_second: 20
+        up_to: 3
+      tsdb_shipper:
+        index_gateway_client:
+          server_address: dns+loki-backend-headless.loki.svc.cluster.local:9095
+      use_thanos_objstore: false
+
+    tracing:
+      enabled: false
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"config.yaml":"auth_enabled: false\n\nbloom_build:\n  builder:\n    planner_address: loki-backend-headless.loki.svc.cluster.local:9095\n  enabled: false\n\nbloom_gateway:\n  client:\n    addresses: dnssrvnoa+_grpc._tcp.loki-backend-headless.loki.svc.cluster.local\n  enabled: false\n\nchunk_store_config:\n  chunk_cache_config:\n    background:\n      writeback_buffer: 5000\n      writeback_goroutines: 1\n      writeback_size_limit: 200MB\n    default_validity: 0s\n    memcached:\n      batch_size: 4\n      parallelism: 5\n    memcached_client:\n      addresses: dnssrvnoa+_memcached-client._tcp.loki-chunks-cache.loki.svc.cluster.local\n      consistent_hash: true\n      max_idle_conns: 72\n      timeout: 2000ms\n\ncommon:\n  compactor_grpc_address: 'loki-backend.loki.svc.cluster.local:9095'\n  path_prefix: /var/loki\n  replication_factor: 1\n  storage:\n    s3:\n      access_key_id: ${AWS_ACCESS_KEY_ID}\n      bucketnames: treecom-bucket\n      insecure: false\n      region: ap-south-1\n      s3: s3://treecom-bucket/loki\n      s3forcepathstyle: false\n      secret_access_key: ${AWS_SECRET_ACCESS_KEY}\n\ncompactor:\n  working_directory: /var/loki/compactor\n  compaction_interval: 10m\n  retention_enabled: true\n  retention_delete_delay: 2h\n  retention_delete_worker_count: 150\n\nfrontend:\n  scheduler_address: \"\"\n  tail_proxy_url: \"\"\n\nfrontend_worker:\n  scheduler_address: \"\"\n\nindex_gateway:\n  mode: simple\n\nlimits_config:\n  retention_period: 48h\n  reject_old_samples: true\n  reject_old_samples_max_age: 168h\n  ingestion_rate_mb: 10\n  ingestion_burst_size_mb: 20\n  per_stream_rate_limit: 3MB\n  per_stream_rate_limit_burst: 15MB\n  max_cache_freshness_per_query: 10m\n  query_timeout: 300s\n  split_queries_by_interval: 15m\n  volume_enabled: true\n\nmemberlist:\n  join_members:\n  - loki-memberlist.loki.svc.cluster.local\n\npattern_ingester:\n  enabled: false\n\nquery_range:\n  align_queries_with_step: true\n  cache_results: true\n  results_cache:\n    cache:\n      background:\n        writeback_buffer: 500000\n        writeback_goroutines: 1\n        writeback_size_limit: 500MB\n      default_validity: 12h\n      memcached_client:\n        addresses: dnssrvnoa+_memcached-client._tcp.loki-results-cache.loki.svc.cluster.local\n        consistent_hash: true\n        timeout: 500ms\n        update_interval: 1m\n\nruler:\n  storage:\n    s3:\n      access_key_id: ${AWS_ACCESS_KEY_ID}\n      bucketnames: treecom-bucket\n      insecure: false\n      region: ap-south-1\n      s3: s3://treecom-bucket/loki\n      s3forcepathstyle: false\n      secret_access_key: ${AWS_SECRET_ACCESS_KEY}\n    type: s3\n  wal:\n    dir: /var/loki/ruler-wal\n\nruntime_config:\n  file: /etc/loki/runtime-config/runtime-config.yaml\n\nschema_config:\n  configs:\n  - from: \"2024-04-01\"\n    index:\n      period: 24h\n      prefix: index_\n    object_store: s3\n    schema: v13\n    store: tsdb\n\nserver:\n  grpc_listen_port: 9095\n  http_listen_port: 3100\n  http_server_read_timeout: 600s\n  http_server_write_timeout: 600s\n\nstorage_config:\n  aws:\n    access_key_id: ${AWS_ACCESS_KEY_ID}\n    region: ap-south-1\n    s3: s3://treecom-bucket/loki\n    secret_access_key: ${AWS_SECRET_ACCESS_KEY}\n  bloom_shipper:\n    working_directory: /var/loki/data/bloomshipper\n  boltdb_shipper:\n    index_gateway_client:\n      server_address: dns+loki-backend-headless.loki.svc.cluster.local:9095\n  hedging:\n    at: 250ms\n    max_per_second: 20\n    up_to: 3\n  tsdb_shipper:\n    index_gateway_client:\n      server_address: dns+loki-backend-headless.loki.svc.cluster.local:9095\n  use_thanos_objstore: false\n\ntracing:\n  enabled: false\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app.kubernetes.io/instance":"loki","app.kubernetes.io/name":"loki"},"name":"loki","namespace":"loki"}}
+    meta.helm.sh/release-name: loki
+    meta.helm.sh/release-namespace: loki
+  creationTimestamp: "2026-02-08T15:37:24Z"
+  labels:
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/version: 3.6.4
+    helm.sh/chart: loki-6.52.0
+  name: loki
+  namespace: loki
+  resourceVersion: "595325"
+  uid: 368bce1d-1cf5-439a-a1f5-42673eb2aa6e

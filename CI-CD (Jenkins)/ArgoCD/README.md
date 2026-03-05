@@ -1,6 +1,5 @@
 Learnt workflow of GitOps tool after that i learnt basic of Argocd. It uses git as a single source of truth. Installed argo on my cluster via offical way availbale on website and exposed argo cd using ingress to access it's UI.
-
-
+After that created a copy of prod environment as a test env using Argocd. COnfigured Argo CD to use my private repo where i have made deployement for test environment. I have frontend, backend and a Database as well for test env. On this environment i will perform tests before moving those changes to prod.
 
 
 1. argocd-server (UI & API)

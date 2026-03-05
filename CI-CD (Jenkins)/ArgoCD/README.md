@@ -1,4 +1,4 @@
-
+Learnt workflow of GitOps tool after that i learnt basic of Argocd. It uses git as a single source of truth. Installed argo on my cluster via offical way availbale on website and exposed argo cd using ingress to access it's UI.
 
 
 

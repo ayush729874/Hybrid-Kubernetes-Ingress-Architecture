@@ -5,7 +5,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: mysqltest-pv        # PVs are cluster-scoped, no namespace
+  name: mysqltest-pv        
 spec:
   capacity:
     storage: 2Gi
@@ -30,7 +30,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: mysql-secret
-  namespace: test            # FIX: was missing namespace
+  namespace: test            
 type: Opaque
 data:
   password: QXl1c2hAMTIz
@@ -133,7 +133,7 @@ data:
   DB_HOST: mysql-svc
   DB_NAME: appdb
   DB_PORT: "3306"
-  BASE_URL: "https://test.treecom.site"   # ADD: needed for short URL generation
+  BASE_URL: "https://test.treecom.site"   
 
 ---
 
@@ -203,7 +203,7 @@ spec:
             configMapKeyRef:
               name: backend-config
               key: DB_PORT
-        - name: BASE_URL                    # ADD: short URL base
+        - name: BASE_URL                   
           valueFrom:
             configMapKeyRef:
               name: backend-config
@@ -218,13 +218,13 @@ spec:
             secretKeyRef:
               name: backend-secret
               key: DB_PASSWORD
-        readinessProbe:                     # ADD: don't send traffic until FastAPI is ready
+        readinessProbe:                     
           httpGet:
             path: /
             port: 8000
           initialDelaySeconds: 10
           periodSeconds: 10
-        livenessProbe:                      # ADD: restart pod if it becomes unhealthy
+        livenessProbe:                      
           httpGet:
             path: /
             port: 8000
@@ -237,7 +237,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend
-  namespace: test              # FIX: was missing namespace
+  namespace: test             
 spec:
   type: ClusterIP
   selector:
@@ -295,7 +295,7 @@ metadata:
   name: frontend
   namespace: test
 spec:
-  type: ClusterIP              # FIX: changed from NodePort — Ingress handles external traffic
+  type: ClusterIP              
   selector:
     app: frontend
   ports:
@@ -312,7 +312,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: treecom-ingress
-  namespace: test              # FIX: was "treecom", must match services namespace
+  namespace: test              
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
@@ -322,7 +322,7 @@ spec:
     http:
       paths:
 
-        # POST /shorten  →  backend (exact, no rewrite)
+        # POST /shorten  
         - path: /shorten
           pathType: Prefix
           backend:
@@ -331,7 +331,7 @@ spec:
               port:
                 number: 8000
 
-        # POST /feedback  →  backend (exact, no rewrite)
+        # POST /feedback 
         - path: /feedback
           pathType: Prefix
           backend:
@@ -340,7 +340,7 @@ spec:
               port:
                 number: 8000
 
-        # GET /stats/{short_code}  →  backend
+        # GET /stats/{short_code} 
         - path: /stats/.*
           pathType: ImplementationSpecific
           backend:
@@ -349,8 +349,8 @@ spec:
               port:
                 number: 8000
 
-        # GET /{short_code}  →  backend (Base62 redirect)
-        # Regex ensures only alphanumeric codes hit backend, not "/"
+        # GET /{short_code}  
+        
         - path: /[a-zA-Z0-9]{1,10}$
           pathType: ImplementationSpecific
           backend:
@@ -359,7 +359,7 @@ spec:
               port:
                 number: 8000
 
-        # GET /  →  frontend (must be last)
+        # GET / 
         - path: /
           pathType: Prefix
           backend:

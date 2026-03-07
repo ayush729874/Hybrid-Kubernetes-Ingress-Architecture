@@ -1,0 +1,369 @@
+# ─────────────────────────────────────────────────────────────
+#  MYSQL
+# ─────────────────────────────────────────────────────────────
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysqltest-pv        # PVs are cluster-scoped, no namespace
+spec:
+  capacity:
+    storage: 2Gi
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - test
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: mysql-sc
+  hostPath:
+    path: /data/mysql
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: test            # FIX: was missing namespace
+type: Opaque
+data:
+  password: QXl1c2hAMTIz
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-svc
+  namespace: test
+spec:
+  type: ClusterIP
+  selector:
+    app: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: test
+spec:
+  serviceName: mysql-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: test
+      securityContext:
+        fsGroup: 999
+      tolerations:
+        - key: "jenkins"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          args:
+            - --slow-query-log=1
+            - --long-query-time=2
+            - --log-output=TABLE
+          ports:
+            - containerPort: 3306
+              name: mysql
+          env:
+            - name: MYSQL_LOG_CONSOLE
+              value: "true"
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              memory: "100Mi"
+            limits:
+              memory: "500Mi"
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            allowPrivilegeEscalation: false
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-persistent-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "mysql-sc"
+        resources:
+          requests:
+            storage: 2Gi
+
+# ─────────────────────────────────────────────────────────────
+#  BACKEND CONFIG & SECRET
+# ─────────────────────────────────────────────────────────────
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: test
+data:
+  DB_HOST: mysql-svc
+  DB_NAME: appdb
+  DB_PORT: "3306"
+  BASE_URL: "https://test.treecom.site"   # ADD: needed for short URL generation
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secret
+  namespace: test
+type: Opaque
+data:
+  DB_USER: QXBwdXNlcg==
+  DB_PASSWORD: QXl1c2hAMTIz
+
+# ─────────────────────────────────────────────────────────────
+#  BACKEND
+# ─────────────────────────────────────────────────────────────
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: test
+      tolerations:
+        - key: "jenkins"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      containers:
+      - name: backend
+        image: ayush2744/backend:v15
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+          limits:
+            cpu: "200m"
+            memory: "200Mi"
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_HOST
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_NAME
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_PORT
+        - name: BASE_URL                    # ADD: short URL base
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: BASE_URL
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: backend-secret
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: backend-secret
+              key: DB_PASSWORD
+        readinessProbe:                     # ADD: don't send traffic until FastAPI is ready
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:                      # ADD: restart pod if it becomes unhealthy
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 30
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: test              # FIX: was missing namespace
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+
+# ─────────────────────────────────────────────────────────────
+#  FRONTEND
+# ─────────────────────────────────────────────────────────────
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: test
+      tolerations:
+        - key: "jenkins"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      containers:
+      - name: frontend
+        image: ayush2744/frontend:v13
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+          limits:
+            cpu: "200m"
+            memory: "200Mi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: test
+spec:
+  type: ClusterIP              # FIX: changed from NodePort — Ingress handles external traffic
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+
+# ─────────────────────────────────────────────────────────────
+#  INGRESS
+# ─────────────────────────────────────────────────────────────
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: treecom-ingress
+  namespace: test              # FIX: was "treecom", must match services namespace
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: test.treecom.site
+    http:
+      paths:
+
+        # POST /shorten  →  backend (exact, no rewrite)
+        - path: /shorten
+          pathType: Prefix
+          backend:
+            service:
+              name: backend
+              port:
+                number: 8000
+
+        # POST /feedback  →  backend (exact, no rewrite)
+        - path: /feedback
+          pathType: Prefix
+          backend:
+            service:
+              name: backend
+              port:
+                number: 8000
+
+        # GET /stats/{short_code}  →  backend
+        - path: /stats/.*
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: backend
+              port:
+                number: 8000
+
+        # GET /{short_code}  →  backend (Base62 redirect)
+        # Regex ensures only alphanumeric codes hit backend, not "/"
+        - path: /[a-zA-Z0-9]{1,10}$
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: backend
+              port:
+                number: 8000
+
+        # GET /  →  frontend (must be last)
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend
+              port:
+                number: 80

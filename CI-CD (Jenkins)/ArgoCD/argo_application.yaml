@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:ayush729874/jenkins-build.git
+    repoURL: git@github.com:ayush729874/k8s_builds.git
     targetRevision: HEAD
     path: test_builds
   destination:

@@ -42,3 +42,11 @@ Each component runs with its own ServiceAccount with only the permissions it nee
 
 Grafana Alloy RBAC
 Grafana Alloy requires read access to pod logs and metadata across namespaces for log collection:
+
+2. Network Isolation (Added)
+The cluster nodes are not directly internet-reachable. All external traffic enters through a cloud VM reverse proxy over a Tailscale VPN tunnel. Direct access to cluster NodePorts is blocked at the OS level via iptables rules on all nodes, covering the full Kubernetes NodePort range 30000-32767. This was validated by identifying and removing an unintentional socat-based relay service (tailscale-forward.service) that was previously exposing port 30437 publicly — discovered through ingress access log analysis showing direct public IPs hitting the cluster.
+
+
+3. Rate Limiting (Added)
+Rate limiting is implemented in two independent layers to prevent abuse of the URL shortening endpoint. Layer 1 on the cloud VM nginx uses limit_req_zone with raw TCP source IP — tamper-proof since no headers are involved — enforcing 10 req/min on /shorten and /api/* with a 100 req/min global flood limit. Layer 2 on the NGINX Ingress Controller acts as a backstop with proxy-real-ip-cidr locked to the VM's Tailscale IP, preventing header spoofing. Verified with live curl testing — correct 429 responses observed after burst exhaustion.
+Known limitation: Per-IP rate limiting is ineffective against distributed botnet attacks where each bot uses a different IP. Cloudflare or a WAF in front of the reverse proxy would be the next step to address this.
